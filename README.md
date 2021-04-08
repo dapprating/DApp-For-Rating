@@ -64,6 +64,6 @@ You need to install **Node.js** in order to start the application. Node.js can b
 
 Make sure that Ganache and Metamask are opened. From the command line run the following commands:
 
-* Go to the client directory and run the following commands: `npm install` and `npm install web3`.
+* Go to the client directory and run the following commands: `npm install`, `npm install web3` and `npm install eth-crypto --save`.
 * In the same directory run `truffle migrate --reset` to redeploy the smart contracts. 
 * After the contracts are deployed, run `npm run dev` in order to start the application.

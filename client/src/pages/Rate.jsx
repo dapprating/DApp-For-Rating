@@ -12,6 +12,8 @@ import DownRateButton from "../components/DownRateButton";
 import CryptoJS from 'crypto-js';
 import { GOOGLE } from '../data/credentials';
 import { Link } from 'react-router-dom';
+import { signerIdentity } from '../data/keys';
+import EthCrypto from 'eth-crypto';
 
 class Rate extends Component {
 
@@ -19,7 +21,8 @@ class Rate extends Component {
     super(props);
     this.state = {
         resource: '', 
-        account: '', 
+        account: '',
+        defaultAccount: '', 
         ethBalance: '', 
         ratingContract: {}, 
         loading: true, 
@@ -69,6 +72,10 @@ class Rate extends Component {
   async loadBlockchainData() {
     const web3 = window.web3;
     web3.currentProvider.enable();
+    const connection = new Web3('http://127.0.0.1:7545');
+    web3.eth.defaultAccount =  (await connection.eth.getAccounts())[0];
+    const defaultAccount = web3.eth.defaultAccount;
+    this.setState({ defaultAccount: defaultAccount });
     const accounts = await web3.eth.getAccounts();
     this.setState({ account: accounts[0] });
     const ethBalance = await web3.eth.getBalance(this.state.account);
@@ -121,9 +128,9 @@ class Rate extends Component {
     }
   }
 
-  rate(credentials, resource, vote) {
+  rate(credentials, resource, vote, sig) {
     this.setState({ loading: true });
-    this.state.ratingContract.methods.rate(credentials, resource, vote).send({ from: this.state.account })
+    this.state.ratingContract.methods.rate(credentials, resource, vote, sig).send({ from: this.state.account })
     .on('error', function (error) { window.alert(error.message); })
     .once('receipt', (receipt) => {
         this.setState({ loading: false });
@@ -180,7 +187,10 @@ class Rate extends Component {
     } else if (isResourceRated && (resourceInformation === vote)) {
       window.alert('Multiple ratings for the same resource are not allowed.');
     } else {
-      this.rate(credentials, resource, vote);
+      const msg = EthCrypto.hash.keccak256([{ type: "bytes32", value: credentials }]);
+      console.log(signerIdentity.account);
+      const sig = EthCrypto.sign(signerIdentity.privateKey, msg);
+      this.rate(credentials, resource, vote, sig);
     }
   }
 

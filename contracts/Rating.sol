@@ -2,6 +2,9 @@ pragma solidity 0.5.16;
 
 contract Rating {
     
+    address publicKey;
+    constructor(address _publicKey) public { publicKey = _publicKey; }
+    
     struct resourceRating {
         uint256 likes;
         uint256 dislikes;
@@ -12,12 +15,21 @@ contract Rating {
     mapping(string => bool) public ratedResources;
     mapping(bytes32 => mapping(string => bool)) public ratingsInformation;
     mapping(bytes32 => mapping(string => bool)) public usersToResources;
+    
+    modifier validCredentials(bytes32 _cred, bytes memory sig) {
+        require(recoverSigner(keccak256(abi.encodePacked(_cred)), sig) == publicKey, 'Invalid credentials.');
+        _;
+    }
 
     function rate(
         bytes32 _cred,
         string memory _res,
-        bool _vote
-    ) public {
+        bool _vote, 
+        bytes memory _sig
+    ) 
+        public
+        validCredentials(_cred, _sig)
+    {
         if (usersToResources[_cred][_res] == true) {
             if (
                 ratingsInformation[_cred][_res] == true &&
@@ -79,5 +91,34 @@ contract Rating {
         returns (string memory)
     {
         return resources[_index];
+    }
+    
+    function recoverSigner(bytes32 message, bytes memory sig)
+       public
+       pure
+       returns (address)
+    {
+       uint8 v;
+       bytes32 r;
+       bytes32 s;
+       (v, r, s) = splitSignature(sig);
+       return ecrecover(message, v, r, s);
+    }
+    
+    function splitSignature(bytes memory sig)
+       public
+       pure
+       returns (uint8, bytes32, bytes32)
+    {
+       require(sig.length == 65);
+       bytes32 r;
+       bytes32 s;
+       uint8 v;
+       assembly {
+           r := mload(add(sig, 32))
+           s := mload(add(sig, 64))
+           v := byte(0, mload(add(sig, 96)))
+       }
+       return (v, r, s);
     }
 }
