@@ -2,8 +2,8 @@ pragma solidity 0.5.16;
 
 contract Rating {
     
-    address publicKey;
-    constructor(address _publicKey) public { publicKey = _publicKey; }
+    address key;
+    constructor(address _key) public { key = _key; }
     
     struct resourceRating {
         uint256 likes;
@@ -17,7 +17,7 @@ contract Rating {
     mapping(bytes32 => mapping(string => bool)) public usersToResources;
     
     modifier validCredentials(bytes32 _cred, bytes memory sig) {
-        require(recoverSigner(keccak256(abi.encodePacked(_cred)), sig) == publicKey, 'Invalid credentials.');
+        require(recoverSigner(keccak256(abi.encodePacked(_cred)), sig) == key, 'Invalid credentials.');
         _;
     }
 

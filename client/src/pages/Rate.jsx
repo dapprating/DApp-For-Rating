@@ -12,8 +12,8 @@ import DownRateButton from "../components/DownRateButton";
 import CryptoJS from 'crypto-js';
 import { GOOGLE } from '../data/credentials';
 import { Link } from 'react-router-dom';
-import { signerIdentity } from '../data/keys';
 import EthCrypto from 'eth-crypto';
+let keys = require('../data/keys.json');
 
 class Rate extends Component {
 
@@ -80,7 +80,6 @@ class Rate extends Component {
     this.setState({ account: accounts[0] });
     const ethBalance = await web3.eth.getBalance(this.state.account);
     this.setState({ ethBalance: ethBalance });
-
     const networkID = await web3.eth.net.getId();
     const abi = Rating.abi;
     const ratingData = Rating.networks[networkID];
@@ -188,8 +187,7 @@ class Rate extends Component {
       window.alert('Multiple ratings for the same resource are not allowed.');
     } else {
       const msg = EthCrypto.hash.keccak256([{ type: "bytes32", value: credentials }]);
-      console.log(signerIdentity.account);
-      const sig = EthCrypto.sign(signerIdentity.privateKey, msg);
+      const sig = EthCrypto.sign(keys.privateKey, msg);
       this.rate(credentials, resource, vote, sig);
     }
   }
